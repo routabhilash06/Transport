@@ -1,0 +1,11 @@
+DEV.url=https://dev.example.com
+DEV.username=dev_user
+DEV.password=dev_pass
+
+QA.url=https://qa.example.com
+QA.username=qa_user
+QA.password=qa_pass
+
+PROD.url=https://prod.example.com
+PROD.username=prod_user
+PROD.password=prod_pass
