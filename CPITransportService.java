@@ -4,21 +4,47 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Base64;
+import java.util.List;
 
 public class CPITransportService {
 
+    // Placeholder for GUI use
+    public List<String> fetchPackages() {
+        return List.of("PackageA", "PackageB", "PackageC");
+    }
+
+    // Placeholder for GUI use
+    public List<String> fetchIFlows(String packageName) {
+        return List.of("iFlow1", "iFlow2", "iFlow3");
+    }
+
+    // GUI-compatible method — minimal param version
+    public void transportIFlow(String packageName, String iFlowId, String targetEnv) {
+        // You'll need to read actual URLs and auth info from config
+        String sourceUrl = Config.get("dev.url");
+        String targetUrl = Config.get(targetEnv.toLowerCase() + ".url");
+        String authType = Config.get("auth.type");
+        String tokenOrCreds = Config.get(targetEnv.toLowerCase() + ".credentials");
+
+        boolean success = transportIFlow(sourceUrl, targetUrl, iFlowId, authType, tokenOrCreds);
+
+        if (success) {
+            System.out.println("Transport succeeded.");
+        } else {
+            System.out.println("Transport failed.");
+        }
+    }
+
+    // Original logic
     public static boolean transportIFlow(String sourceUrl, String targetUrl, String iFlowId, String authType, String tokenOrCredentials) {
         try {
-            // Export iFlow from source
             byte[] iflowContent = exportIFlow(sourceUrl, iFlowId, authType, tokenOrCredentials);
             if (iflowContent == null) {
                 System.err.println("Failed to export iFlow.");
                 return false;
             }
 
-            // Deploy iFlow to target
-            boolean result = importIFlow(targetUrl, iFlowId, authType, tokenOrCredentials, iflowContent);
-            return result;
+            return importIFlow(targetUrl, iFlowId, authType, tokenOrCredentials, iflowContent);
 
         } catch (Exception e) {
             e.printStackTrace();
