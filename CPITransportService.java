@@ -5,19 +5,19 @@ import java.util.List;
 
 public class CPITransportService {
 
-    // Dummy method: Replace with actual logic if needed
     public List<String> fetchPackages() {
+        // Dummy data for demo purposes
         return Arrays.asList("PackageA", "PackageB", "PackageC");
     }
 
-    // Dummy method: Replace with actual logic if needed
-    public List<String> fetchIFlows(String packageId) {
+    public List<String> fetchIFlows(String packageName) {
+        // Dummy data for demo purposes
         return Arrays.asList("IFlow1", "IFlow2", "IFlow3");
     }
 
-    // This version matches what TransportToolUI is calling
-    public boolean transportIFlow(String sourceEnv, String targetEnv, String iFlowName) {
-        System.out.println("Transporting " + iFlowName + " from " + sourceEnv + " to " + targetEnv);
+    public boolean transportIFlow(String sourceEnv, String targetEnv, String iFlowId, String authType, String credentials) {
+        // Dummy transport logic for demo purposes
+        System.out.println("Transporting iFlow: " + iFlowId + " from " + sourceEnv + " to " + targetEnv);
         return true;
     }
 }
