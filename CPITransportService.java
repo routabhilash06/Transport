@@ -1,41 +1,62 @@
 package com.example.transport;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Base64;
 import java.util.List;
+import java.util.ArrayList;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import java.nio.charset.StandardCharsets;
 
 public class CPITransportService {
 
-    // Placeholder for GUI use
-    public List<String> fetchPackages() {
-        return List.of("PackageA", "PackageB", "PackageC");
-    }
+    public List<String> fetchPackages(String sourceUrl, String authType, String tokenOrCredentials) {
+        List<String> packages = new ArrayList<>();
+        try {
+            URL url = new URL(sourceUrl + "/api/v1/IntegrationPackages");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            setAuthHeader(conn, authType, tokenOrCredentials);
 
-    // Placeholder for GUI use
-    public List<String> fetchIFlows(String packageName) {
-        return List.of("iFlow1", "iFlow2", "iFlow3");
-    }
+            InputStream responseStream = conn.getInputStream();
+            String response = new String(responseStream.readAllBytes(), StandardCharsets.UTF_8);
+            JSONObject json = new JSONObject(response);
+            JSONArray results = json.getJSONArray("d");
 
-    // GUI-compatible method — minimal param version
-    public void transportIFlow(String packageName, String iFlowId, String targetEnv) {
-        // You'll need to read actual URLs and auth info from config
-        String sourceUrl = Config.get("dev.url");
-        String targetUrl = Config.get(targetEnv.toLowerCase() + ".url");
-        String authType = Config.get("auth.type");
-        String tokenOrCreds = Config.get(targetEnv.toLowerCase() + ".credentials");
-
-        boolean success = transportIFlow(sourceUrl, targetUrl, iFlowId, authType, tokenOrCreds);
-
-        if (success) {
-            System.out.println("Transport succeeded.");
-        } else {
-            System.out.println("Transport failed.");
+            for (int i = 0; i < results.length(); i++) {
+                packages.add(results.getJSONObject(i).getString("Name"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return packages;
     }
 
-    // Original logic
+    public List<String> fetchIFlows(String sourceUrl, String packageId, String authType, String tokenOrCredentials) {
+        List<String> iflows = new ArrayList<>();
+        try {
+            URL url = new URL(sourceUrl + "/api/v1/IntegrationPackages('" + packageId + "')/IntegrationDesigntimeArtifacts");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            setAuthHeader(conn, authType, tokenOrCredentials);
+
+            InputStream responseStream = conn.getInputStream();
+            String response = new String(responseStream.readAllBytes(), StandardCharsets.UTF_8);
+            JSONObject json = new JSONObject(response);
+            JSONArray results = json.getJSONArray("d");
+
+            for (int i = 0; i < results.length(); i++) {
+                iflows.add(results.getJSONObject(i).getString("Id"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return iflows;
+    }
+
     public static boolean transportIFlow(String sourceUrl, String targetUrl, String iFlowId, String authType, String tokenOrCredentials) {
         try {
             byte[] iflowContent = exportIFlow(sourceUrl, iFlowId, authType, tokenOrCredentials);
@@ -44,7 +65,8 @@ public class CPITransportService {
                 return false;
             }
 
-            return importIFlow(targetUrl, iFlowId, authType, tokenOrCredentials, iflowContent);
+            boolean result = importIFlow(targetUrl, iFlowId, authType, tokenOrCredentials, iflowContent);
+            return result;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -53,44 +75,4 @@ public class CPITransportService {
     }
 
     private static byte[] exportIFlow(String sourceUrl, String iFlowId, String authType, String tokenOrCreds) throws IOException {
-        URL url = new URL(sourceUrl + "/api/v1/iflows/" + iFlowId + "/$export");
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("GET");
-        setAuthHeader(conn, authType, tokenOrCreds);
-
-        if (conn.getResponseCode() == 200) {
-            return conn.getInputStream().readAllBytes();
-        } else {
-            System.err.println("Export failed: HTTP " + conn.getResponseCode());
-            return null;
-        }
-    }
-
-    private static boolean importIFlow(String targetUrl, String iFlowId, String authType, String tokenOrCreds, byte[] content) throws IOException {
-        URL url = new URL(targetUrl + "/api/v1/iflows/" + iFlowId + "/$import");
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestMethod("POST");
-        conn.setDoOutput(true);
-        conn.setRequestProperty("Content-Type", "application/zip");
-        setAuthHeader(conn, authType, tokenOrCreds);
-
-        conn.getOutputStream().write(content);
-
-        if (conn.getResponseCode() == 200 || conn.getResponseCode() == 201) {
-            System.out.println("iFlow transported successfully.");
-            return true;
-        } else {
-            System.err.println("Import failed: HTTP " + conn.getResponseCode());
-            return false;
-        }
-    }
-
-    private static void setAuthHeader(HttpURLConnection conn, String authType, String tokenOrCreds) {
-        if ("OAuth2".equalsIgnoreCase(authType)) {
-            conn.setRequestProperty("Authorization", "Bearer " + tokenOrCreds);
-        } else if ("Basic".equalsIgnoreCase(authType)) {
-            String encoded = Base64.getEncoder().encodeToString(tokenOrCreds.getBytes());
-            conn.setRequestProperty("Authorization", "Basic " + encoded);
-        }
-    }
-}
+        URL
